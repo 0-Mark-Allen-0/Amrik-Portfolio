@@ -1,0 +1,24 @@
+data = [x(:,1) x(:,2) y];
+
+A(:,1) = ones(length(y),1);
+A(:,2) = data(:,1);
+A(:,3) = data(:,2);
+p = inv(A'*A)*((A')*data(:,3))
+% fitlm is the Matlab in-built routine for multiple linear regression model
+x1fit = linspace(min(data(:,1)),max(data(:,1)),10);
+x2fit = linspace(min(data(:,2)),max(data(:,2)),10);
+[X1, X2] = meshgrid(x1fit,x2fit);
+LS = p(1) + p(2).*X1 + p(3).*X2;
+X1,X2
+plot3(data(:,1),data(:,2),data(:,3),'ko',...
+'linewidth',4,'MarkerSize',20,'MarkerFaceColor',[1 1 1]); hold on;
+%scatter3(data(:,1),data(:,2),data(:,3),’linewidth’,2,’MarkerSize’,20);
+hold on;
+LS_plot = mesh(X1,X2,LS,'FaceAlpha',0.85);
+xlabel('Education expenditure','FontSize',20);
+ylabel('Employee compensation','FontSize',20);
+zlabel('GDP','FontSize',20);
+legend('data','multiple linear regression plane',...
+'Location','northwest','FontSize',16);
+set(LS_plot,'edgecolor','none','facecolor',[0.35 0.35 0.35])
+set(gca,'FontSize',20);

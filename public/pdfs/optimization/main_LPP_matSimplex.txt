@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec  9 20:53:28 2024
+
+@author: amriksen
+"""
+
+# main_driver.py
+
+from simplex_module import simplex
+
+def main():
+    """
+    Main function to demonstrate the Revised Simplex Method with <= constraints.
+    """
+    # Example Linear Programming Problem:
+
+
+    # Coefficients of the objective function
+    c = [4]
+    #c = [4]
+    
+    # Constant term in the objective function
+    c0 = 14
+
+    # Coefficients of the constraints
+    # below for >= 2D LPP
+    # A = [
+    #     [5, 2],
+    #     [1, 1],
+    #     [1, 0],
+    #     [0, 1], 
+    #     [1, 0], 
+    #     [0, 1]
+    # ]
+    # below for 1D LPP
+    A = [
+        [2],
+        [1]
+    ]
+
+    # Right-hand side values
+    #b = [1, 1, 1, 1, 1, 1]
+    b = [ 1, 1]
+
+    print("Solving the following Linear Programming Problem:")
+
+
+    # Run the simplex method
+    result = simplex(c, A, b, c0=c0)
+
+# Handle the result
+    if isinstance(result, str):
+        # An error message was returned
+        print(result)
+    else:
+        # The simplex function already prints the optimal value and solution
+        # If you want to handle the output differently, uncomment the following lines:
+        
+        # optimal_value, solution = result
+        # print("\nOptimal value:", optimal_value)
+        # print("Solution:")
+        # for idx, val in enumerate(solution):
+        #     print(f" x{idx+1} = {val}")
+        pass  # The results are already printed within the simplex function
+
+if __name__ == "__main__":
+    main()

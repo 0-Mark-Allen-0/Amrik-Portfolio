@@ -1,0 +1,26 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+%matplotlib qt
+
+data = np.concatenate((x, y.reshape(-1, 1)), axis=1)
+A = np.ones((len(y), 3))
+A[:, 1:3] = data[:, :2]
+p = np.matmul(np.linalg.inv(np.matmul(A.transpose(),A)),np.matmul(A.transpose(),data[:,2]))
+# Prediction
+x1fit = np.arange(min(data[:, 0]), max(data[:, 0]), 100)
+x2fit = np.arange(min(data[:, 1]), max(data[:, 1]), 100)
+X1, X2 = np.meshgrid(x1fit, x2fit)
+LS = p[0] + p[1]*X1 + p[2]*X2
+
+# Plotting
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(data[:, 0], data[:, 1], data[:, 2], c='r', marker='o', linewidth=6, s=40, facecolors='none', label='data')
+ax.plot_surface(X1, X2, LS, alpha=0.85, color=[0.35, 0.35, 0.35])
+ax.set_xlabel('Education expenditure', fontsize=10)
+ax.set_ylabel('Employee compensation', fontsize=10)
+ax.set_zlabel('GDP', fontsize=10)
+ax.legend(['multiple linear regression plane'], loc='upper left', fontsize=10)
+plt.show()

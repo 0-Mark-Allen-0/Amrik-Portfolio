@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 22 08:25:06 2025
+
+@author: amriksen
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Synthetic data: hours studied per week (x) and marks obtained (y)
+np.random.seed(42)
+x = np.linspace(0, 10, 30)  # hours per week from 0 to 10
+# assume marks = base + b*x + c*x^2 + noise
+a_true, b_true, c_true = 50, 10, -0.5  # underlying parameters
+y = a_true + b_true * x + c_true * x**2 + np.random.randn(len(x)) * 5.0
+
+
+# 2. Compute all sums needed for Equation 6.13
+n     = len(x)
+sum_x   = x.sum()
+sum_x2  = (x**2).sum()
+sum_x3  = (x**3).sum()
+sum_x4  = (x**4).sum()
+sum_y   = y.sum()
+sum_xy  = (x * y).sum()
+sum_x2y = ((x**2) * y).sum()
+
+# 3. Build the 3×3 matrix Λ and right‐hand side vector q
+Lambda = np.array([
+    [  n,    sum_x,   sum_x2],
+    [sum_x, sum_x2,  sum_x3],
+    [sum_x2,sum_x3,  sum_x4]
+])
+q = np.array([sum_y, sum_xy, sum_x2y])
+
+# 4. Solve for [a, b, c] by inverting Λ
+a_est, b_est, c_est = np.linalg.inv(Lambda) @ q
+
+print(f"Estimated parameters:\na = {a_est:.4f}\nb = {b_est:.4f}\nc = {c_est:.4f}")
+
+# 5. Plot the data and fitted quadratic curve
+plt.scatter(x, y, label='Data points', color='orange')
+x_fit = np.linspace(x.min(), x.max(), 200)
+y_fit = a_est + b_est * x_fit + c_est * x_fit**2
+plt.plot(x_fit, y_fit, 'r-', linewidth=2, label='Fitted curve')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Quadratic Least Squares via Eq. 6.13')
+plt.legend()
+plt.show()
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Apr 22 08:06:00 2025
+
+@author: amriksen
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Synthetic data: hours studied per week (x) and marks obtained (y)
+np.random.seed(42)
+x = np.linspace(0, 10, 30)  # hours per week from 0 to 10
+# assume marks = base + b*x + c*x^2 + noise
+a_true, b_true, c_true = 50, 10, -0.5  # underlying parameters
+y = a_true + b_true * x + c_true * x**2 + np.random.randn(len(x)) * 5.0
+
+
+# Construct design matrix X with a column of ones (intercept) and x
+X = np.vstack((np.ones_like(x), x)).T
+
+# Compute OLS coefficients: beta = (X^T X)^{-1} X^T y
+beta = np.linalg.inv(X.T @ X) @ X.T @ y
+intercept, slope = beta
+
+print(f"Estimated intercept: {intercept:.3f}")
+print(f"Estimated slope: {slope:.3f}")
+
+# Plot the data and the fitted regression line
+plt.scatter(x, y, label='Data points')
+plt.plot(x, X @ beta, label='OLS fit', linewidth=2)
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Ordinary Least Squares Regression (Multivariate Form)')
+plt.legend()
+plt.show()
+

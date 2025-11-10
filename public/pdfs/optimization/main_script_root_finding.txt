@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 26 22:43:41 2024
+
+@author: amriksen
+"""
+
+# Example usage:
+import math
+from my_root_finding_Module import *
+import sympy as sp
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the symbol
+x = sp.Symbol('x')
+
+# Define the function f(x)
+f = x**2 - 2  # Example function: f(x) = x^2 - 2
+# Display the function and its derivative
+print("Function:")
+sp.pprint(f)
+
+# Compute the derivative of the function f'(x)
+f_prime = sp.diff(f, x)
+
+#print("\nDerivative of the function:")
+sp.pprint(f_prime)
+
+# Derive a fixed-point function g(x) for the problem f(x) = 0
+# For example, we can rearrange f(x) = 0 as x = g(x)
+# One possible g(x) for this case could be g(x) = sqrt(2)
+# Another option is g(x) = 0.5 * (x + 2/x)
+
+g = 0.5 * (x + 2/x)
+
+#g = x- x**2 + 2
+
+g_numeric = sp.lambdify(x, g, "numpy")#sp.lambdify: This function converts a SymPy expression
+# into a function that can be evaluated numerically. 
+#g: This is the SymPy expression that we want to convert into a numerical function.
+
+
+# Initial guess
+x0 = 1.5
+
+# Find the root and track errors using Newton's method
+#root, errors, root_approx = my_Newtons_Method(f, f_prime, x0)
+
+
+root, errors, root_approx = my_Fixed_Point_Iteration_Method(g_numeric, x0)
+
+# Verify the result symbolically
+f_root = f.subs(x, root)
+print(f"\nf(root) = {f_root} (should be close to 0)")
+
+
+# Verify the result symbolically (using evalf only if it's a SymPy expression)
+if isinstance(root, sp.Basic):  # Check if root is a SymPy object
+    f_root = f.subs(x, root).evalf()  # Evaluate symbolically. This is the case for my_Newtons_Method
+else:
+    f_root = f.subs(x, root)  # For floats, no evalf needed. This is the case for my_Fixed_Point_Iteration_Method
+print(f"\nf(root) = {f_root} (should be close to 0)")
+
+
+
+# Convert root approximations to a list of floats for plotting
+root_approx_numeric = [float(approx) for approx in root_approx]
+
+# Plot the errors on a logarithmic scale to show quadratic convergence
+plt.figure(figsize=(10, 6))
+iterations = np.arange(1, len(errors) + 1)
+plt.plot(iterations, errors, 'o-', label='Error at each iteration')
+plt.yscale('log')
+plt.xlabel('Iteration')
+plt.ylabel('Error (log scale)')
+plt.title('Rapid convergence of Newton\'s Method as iterates get closer to the root')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+# The ratio of e[k+1]/e^2[k+1] ~~ A (constant) which is the rate of convergence 
+for i in range(1, len(errors) - 1):
+    ratio = errors[i+1] / errors[i]**2
+    print(f"Error ratio at iteration {i+1}: {ratio}")

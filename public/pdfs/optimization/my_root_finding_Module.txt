@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Aug 26 22:42:51 2024
+
+@author: amriksen
+"""
+import math
+import sympy as sp
+from colorama import Fore, Back, Style # for colored printed text
+import sys
+
+
+# Define the symbol
+x = sp.Symbol('x')
+
+
+# Newton-Raphsson method for root finding problems -- single variable case 
+def my_Newtons_Method(f, f_prime, x0, tolerance=1e-10, max_iterations=10):
+    xn = x0
+    errors = []
+    root_approx = []
+
+    for n in range(max_iterations):
+        fxn = f.subs(x, xn)
+        fpxn = f_prime.subs(x, xn)
+        
+        if fpxn == 0:
+            print("Zero derivative. No solution found.")
+            return None, errors
+        
+        xn_new = xn - fxn / fpxn
+        # Calculate the error as the absolute difference between successive approximations
+        error = abs(xn_new - xn)
+        errors.append(error)
+        root_approx.append(xn_new)
+
+        print(f"Iteration {n+1}: x = {xn_new}, Error = {error}")
+    
+        # Check for convergence
+        if error < tolerance:
+            print(f"Converged to {xn_new} after {n+1} iterations.")
+            break
+    
+        xn = xn_new
+        
+    return xn, errors, root_approx
+
+
+
+# Fixed-point iteration function
+def my_Fixed_Point_Iteration_Method(g_numeric, x0, tolerance=1e-10, max_iterations=10):
+    xn = x0
+    errors = []
+    root_approx = []
+    for n in range(max_iterations):
+        xn_new = g_numeric(xn)
+        print(f"Iteration {n+1}: x = {xn_new}")
+        
+        # Calculate the error as the absolute difference between successive approximations
+        error = abs(xn_new - xn)
+        errors.append(error)
+        root_approx.append(xn_new)
+
+        print(f"Iteration {n+1}: x = {xn_new}, Error = {error}")
+    
+        # Check for convergence
+        if error < tolerance:
+            print(f"Converged to {xn_new} after {n+1} iterations.")
+            break
+        
+        xn = xn_new
+    
+    if error > tolerance:
+        print(Fore.YELLOW + "\n ERROR:  " + "Maximum iterations reached without convergence!\n" + Style.RESET_ALL)
+        sys.exit(1)
+    return xn, errors, root_approx

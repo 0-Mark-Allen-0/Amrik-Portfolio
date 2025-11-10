@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep  2 21:37:10 2024
+
+@author: amriksen
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def my_Newton_Method_ComplexPlane(z, func, dfunc, order=1.0, max_iter=100, tol=1e-16):
+    for i in range(max_iter):
+        f_z = func(z)
+        df_z = dfunc(z)
+        
+        # Check if the function or derivative evaluation returned None or if derivative is too small
+        if f_z is None or df_z is None:
+            return None
+        
+        # Avoid division by a very small number
+        if np.abs(df_z) < tol:
+            # Perturb the current z slightly to avoid division by a small df_z
+            z = z + tol  # You can tweak this perturbation strategy as needed
+            df_z = dfunc(z)
+            if np.abs(df_z) < tol:
+                # If perturbation doesn't help, return None or break
+                return None
+        
+        
+        # Update z using Newton's method
+        z_next = z - order * f_z / df_z
+        
+        # Check for convergence
+        if abs(z_next - z) < tol:
+            return z_next
+        
+        z = z_next
+    # Return the last value of z if it doesn't converge
+    return z
+
+
+def my_Relaxed_Newton_Method_ComplexPlane(z, func, dfunc, order, max_iter=100, tol=1e-16):
+    # z_next = z - k*f_z/df_z
+    for i in range(max_iter):
+        f_z = func(z)
+        df_z = dfunc(z)
+        
+        # Check if the function or derivative evaluation returned None or if derivative is too small
+        if f_z is None or df_z is None:
+            return None
+        
+        # Avoid division by a very small number
+        if np.abs(df_z) < tol:
+            # Perturb the current z slightly to avoid division by a small df_z
+            z = z + tol  # You can tweak this perturbation strategy as needed
+            df_z = dfunc(z)
+            if np.abs(df_z) < tol:
+                # If perturbation doesn't help, return None or break
+                return None
+            
+        z_next = z - order * f_z / df_z
+        
+        # Check for NaN or Inf in the result
+        if np.isnan(z_next) or np.isinf(z_next):
+            return None
+        
+        if abs(z_next - z) < tol:
+            break
+            
+        z = z_next
+        
+    return z
+
+
+def my_Newton_Method_Multiple_Roots(z, func, dfunc, d2func, max_iter=50, tol=1e-6):
+    """
+    Newton's method adjusted for multiple roots using the second derivative.
+    
+    :param z: Initial guess
+    :param func: Function to find roots for
+    :param dfunc: First derivative of the function
+    :param d2func: Second derivative of the function
+    :param max_iter: Maximum number of iterations
+    :param tol: Tolerance for convergence
+    :return: Approximation of the root
+    """
+    for i in range(max_iter):
+        f_z = func(z)
+        df_z = dfunc(z)
+        d2f_z = d2func(z)
+        
+        # Check if any function evaluation returned None
+        if f_z is None or df_z is None or d2f_z is None:
+            return None
+        
+        # Avoid division by zero or small numbers
+        denominator = df_z**2 - f_z * d2f_z
+        if np.abs(denominator) < tol:
+            return None
+        
+        # Modified Newton's method for multiple roots
+        z_next = z - (f_z * df_z) / denominator
+        
+        # Check for NaN or Inf in the result
+        if np.isnan(z_next) or np.isinf(z_next):
+            return None
+        
+        if abs(z_next - z) < tol:
+            return z_next
+        
+        z = z_next
+        
+    return z
+
+
+def find_root_index(z, roots, tol=1e-6):
+    if z is None:
+        return len(roots)
+    for i, root in enumerate(roots):
+        if abs(z - root) < tol:
+            return i
+    return len(roots)

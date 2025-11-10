@@ -1,0 +1,94 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 #!/usr/bin/env python3\
+# -*- coding: utf-8 -*-\
+"""\
+Created on Mon Oct 28 21:57:11 2024\
+\
+@author: amriksen\
+"""\
+import numpy as np\
+import sympy as sp\
+import matplotlib.pyplot as plt\
+from matplotlib.animation import FuncAnimation\
+from IPython.display import HTML  # For rendering in notebooks\
+\
+\
+# Define the symbol\
+x = sp.Symbol('x')\
+\
+# Define the function and its derivative (gradient)\
+f = x**2 - 2  \
+f_prime_sym = sp.diff(f, x)\
+\
+# Lambdafication: Convert f in symbolic env to a lambda function for numerical computation\
+f_prime = lambda x_val: float(f_prime_sym.subs(x, x_val))\
+\
+# Gradient descent parameters\
+x_start = 10  # Starting point for x\
+learning_rate = 0.05  # Step size\
+n_iterations = 200  # Number of iterations\
+tolerance = 1e-6  # Tolerance level for stopping criterion\
+\
+\
+# Store the x values and corresponding f(x) values\
+x_values = [x_start]\
+y_values = [float(f.subs(x, x_start))]\
+\
+# Perform gradient descent and store values for animation\
+xn = x_start\
+for i in range(n_iterations):\
+    gradient = f_prime(xn)\
+    # Check if gradient is zero to stop the descent\
+    if abs(gradient) < tolerance: # equivalent to: if gradient == 0:\
+        print(f"Stopped at iteration \{i\} as gradient reached zero.")\
+        break\
+    xn = xn - learning_rate * gradient\
+    x_values.append(xn)\
+    y_values.append(float(f.subs(x, xn)))\
+\
+# Generate x range for the function curve\
+x_range = np.linspace(-12, 12, 100)\
+y_range = [float(f.subs(x, val)) for val in x_range]\
+\
+# Setup the figure and axis\
+fig, ax = plt.subplots(figsize=(10, 6))\
+ax.plot(x_range, y_range, label="f(x) = x^2", color="blue")\
+scat = ax.scatter([], [], color="red", label="Gradient Descent Steps")\
+line, = ax.plot([], [], color="red", linestyle="--", alpha=0.6)\
+ax.set_title("Gradient Descent Visualization on f(x) = x^2")\
+ax.set_xlabel("x")\
+ax.set_ylabel("f(x)")\
+ax.legend()\
+ax.grid(True)\
+\
+# Initialize the animation function\
+def init():\
+    scat.set_offsets(np.empty((0, 2)))  # Clear scatter plot initially\
+    line.set_data([], [])\
+    return scat, line\
+\
+# Animation function to update each frame\
+def animate(i):\
+    if i < len(x_values):\
+        x_data = np.array(x_values[:i+1])\
+        y_data = np.array(y_values[:i+1])\
+        scat.set_offsets(np.column_stack((x_data, y_data)))  # Stack x and y as 2D array\
+        line.set_data(x_data, y_data)  # Update line path\
+    return scat, line\
+\
+# Create the animation\
+ani = FuncAnimation(fig, animate, frames=len(x_values), init_func=init, blit=True, interval=500)\
+\
+# Display the animation in a Jupyter notebook\
+HTML(ani.to_jshtml())\
+\
+# Optional: Save the animation as a GIF (uncomment if needed)\
+ani.save("gradient_descent.gif", writer="pillow")\
+plt.show()\
+}

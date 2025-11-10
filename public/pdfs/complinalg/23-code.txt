@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr 24 09:46:46 2025
+
+@author: amriksen
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+np.random.seed(42)
+# x1: Study hours for Subject 1
+x1_values = np.arange(1, 25, 1) # from 1 to 24, step 1
+print("Study hours (x1):", x1_values)
+# # x2: Study hours for Subject 2 (linearly dependent)
+# x2_values = 1.2 * x1_values
+# print("Lab study minutes (x2):", x2_values)
+# Scale the quadratic and linear terms to keep the marks in a realistic range
+# Adjust coefficients so that output is naturally between 10 and 100
+a, c = 3.5, 20 # Chosen to keep marks in desired range
+noise = np.random.randint(-25, 5, size=x1_values.shape) # Small integer noise
+marks = (a * x1_values + c + noise).astype(int)
+print("Generated marks:", marks)
+# Ensure all marks are strictly within [10, 100] using coefficient tuning only
+print(f"\nMin mark: {marks.min()}, Max mark: {marks.max()}")
+# Construct matrix A with linearly dependent columns
+A = np.vstack([x1_values, np.ones_like(x1_values)]).T
+b_vec = marks
+# QR factorization for least squares solution
+Q, R = np.linalg.qr(A)
+x = np.linalg.inv(R) @ Q.T @ b_vec
+# Extract coefficients
+a_fit, b2_fit = x
+print(f"\nFitted curve: y = {a_fit:.6f} * x + {b2_fit:.6f}")
+# Plot
+plt.figure(figsize=(8, 6))
+plt.scatter(x1_values, marks, color='green', label='Data points', alpha=0.8)
+# Best fit curve using x1 and dependent x2
+x1_fit = np.linspace(min(x1_values), max(x1_values), 300)
+y_fit = a_fit * x1_fit + b2_fit
+plt.plot(x1_fit, y_fit, color='blue', label='Best fit curve')
+plt.xlabel('Study Hours for Subject 1')
+plt.ylabel('Marks')
+plt.title('Marks vs Study Hours (Subjects 1) – Natural Range Fit')
+plt.legend()
+plt.grid(True)
+plt.ylim(0, 110)
+plt.show()

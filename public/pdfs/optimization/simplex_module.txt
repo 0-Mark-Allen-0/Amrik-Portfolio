@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Dec  9 20:44:06 2024
+
+@author: amriksen
+"""
+
+# simplex_module.py
+
+import numpy as np
+
+def initialize_simplex(c, A, b):
+    """
+    Initializes the simplex method by adding slack variables and setting up the initial basis.
+    
+    Parameters:
+    c (list or np.array): Coefficients of the objective function.
+    A (list of lists or np.array): Coefficients of the constraint inequalities.
+    b (list or np.array): Right-hand side values of the constraints.
+    
+    Returns:
+    A_aug (np.array): Augmented constraint matrix with slack variables.
+    c_aug (np.array): Augmented objective function coefficients including slack variables.
+    basis (list): Indices of initial basic variables (slack variables).
+    """
+    A = np.array(A, dtype=float)
+    b = np.array(b, dtype=float)
+    c = np.array(c, dtype=float)
+    
+    num_constraints, num_variables = A.shape
+    
+    # Add slack variables (identity matrix)
+    slack = np.eye(num_constraints)
+    A_aug = np.hstack((A, slack))
+    
+    # Extend objective function coefficients with zeros for slack variables
+    c_aug = np.concatenate([c, np.zeros(num_constraints)])
+    
+    # Initial basis consists of slack variables
+    basis = list(range(num_variables, num_variables + num_constraints))
+    
+    return A_aug, c_aug, basis
+
+def compute_reduced_costs(c_B, c_N, B_inv, N):
+    """
+    Computes the reduced costs for non-basic variables.
+    
+    Parameters:
+    c_B (np.array): Objective coefficients of basic variables.
+    c_N (np.array): Objective coefficients of non-basic variables.
+    B_inv (np.array): Inverse of the basis matrix.
+    N (np.array): Non-basis matrix.
+    
+    Returns:
+    reduced_costs (np.array): Reduced costs for non-basic variables.
+    """
+    y = c_B @ B_inv  # Dual variables
+    reduced_costs = c_N - y @ N
+    return reduced_costs
+
+def find_entering_variable(reduced_costs, non_basic_vars):
+    """
+    Identifies the entering variable based on reduced costs.
+    
+    Parameters:
+    reduced_costs (np.array): Reduced costs for non-basic variables.
+    non_basic_vars (list): Indices of non-basic variables.
+    
+    Returns:
+    entering_var (int): Index of the entering variable. Returns -1 if optimal.
+    """
+    # For maximization, entering variable has positive reduced cost
+    candidates = np.where(reduced_costs > 1e-10)[0]
+    if len(candidates) == 0:
+        return -1  # Optimal reached
+    # Choose the first candidate (can implement Bland's rule to prevent cycling)
+    entering = candidates[0]
+    entering_var = non_basic_vars[entering]
+    return entering_var
+
+def find_leaving_variable(B_inv, A, entering_var, b, basis):
+    """
+    Determines the leaving variable using the minimum ratio test.
+    
+    Parameters:
+    B_inv (np.array): Inverse of the basis matrix.
+    A (np.array): Augmented constraint matrix.
+    entering_var (int): Index of the entering variable.
+    b (np.array): Right-hand side vector.
+    basis (list): Indices of basic variables.
+    
+    Returns:
+    leaving_var (int): Index of the leaving variable. Returns -1 if unbounded.
+    pivot_row (int): Row index of the leaving variable.
+    """
+    # Column of A corresponding to entering variable
+    a_j = B_inv @ A[:, entering_var]
+    if all(a_j <= 1e-10):
+        return -1, -1  # Unbounded
+    # Compute ratios where a_j > 0
+    ratios = []
+    for i in range(len(a_j)):
+        if a_j[i] > 1e-10:
+            ratio = (B_inv @ b)[i] / a_j[i]
+            ratios.append(ratio)
+        else:
+            ratios.append(np.inf)
+    min_ratio = min(ratios)
+    if min_ratio == np.inf:
+        return -1, -1  # Unbounded
+    pivot_row = ratios.index(min_ratio)
+    leaving_var = basis[pivot_row]
+    return leaving_var, pivot_row
+
+def update_basis(basis, entering_var, leaving_var, pivot_row, A_aug):
+    """
+    Updates the basis by replacing the leaving variable with the entering variable.
+    
+    Parameters:
+    basis (list): Current basis variables.
+    entering_var (int): Variable entering the basis.
+    leaving_var (int): Variable leaving the basis.
+    pivot_row (int): Row index where pivot occurs.
+    A_aug (np.array): Augmented constraint matrix.
+    
+    Returns:
+    new_basis (list): Updated list of basis variables.
+    """
+    new_basis = basis.copy()
+    new_basis[pivot_row] = entering_var
+    return new_basis
+
+def simplex(c, A, b, c0=0):
+    """
+    Solves the Linear Programming Problem using the Revised Simplex Method.
+    
+    Parameters:
+    c (list or np.array): Coefficients of the objective function (excluding the constant term).
+    A (list of lists or np.array): Coefficients of the constraint inequalities.
+    b (list or np.array): Right-hand side values of the constraints.
+    c0 (float): Constant term in the objective function.
+    
+    Returns:
+    tuple: (Optimal value, Solution vector) if bounded and feasible,
+           otherwise appropriate messages.
+    """
+    # Initialize simplex
+    A_aug, c_aug, basis = initialize_simplex(c, A, b)
+    num_constraints, num_total_vars = A_aug.shape
+    num_original_vars = len(c)
+    
+    # Initialize non-basis variables correctly (original variables not in basis)
+    non_basis = [j for j in range(num_total_vars) if j not in basis]
+    
+    iteration = 0
+    max_iterations = 1000  # Prevent infinite loops
+    
+    while iteration < max_iterations:
+        iteration +=1
+        print(f"\n--- Iteration {iteration} ---")
+        # Display current basis and non-basis with variable names
+        basis_vars = [f'x{var+1}' for var in basis]
+        non_basis_vars = [f'x{var+1}' for var in non_basis]
+        print(f"Current Basis: {basis_vars}")
+        print(f"Non-Basis: {non_basis_vars}")
+        
+        # Form basis matrix
+        B = A_aug[:, basis]
+        try:
+            B_inv = np.linalg.inv(B)
+        except np.linalg.LinAlgError:
+            return "The basis matrix is singular and cannot be inverted."
+        
+        # Compute basic solution
+        x_B = B_inv @ b
+        # Format basic solution to four decimal places
+        x_B_formatted = [f"{val:.4f}" for val in x_B]
+        print(f"Basic Solution (x_B): {x_B_formatted}")
+        
+        # Check for feasibility
+        if any(x_B < -1e-10):
+            return "The problem is infeasible."
+        
+        # Compute non-basis matrix
+        N = A_aug[:, non_basis]
+        
+        # Compute objective coefficients for basis and non-basis
+        c_B = c_aug[basis]
+        c_N = c_aug[non_basis]
+        
+        # Compute reduced costs
+        reduced_costs = compute_reduced_costs(c_B, c_N, B_inv, N)
+        # Format reduced costs to four decimal places
+        reduced_costs_formatted = [f"{rc:.4f}" for rc in reduced_costs]
+        print(f"Reduced Costs: {reduced_costs_formatted}")
+        
+        # Find entering variable
+        entering_var = find_entering_variable(reduced_costs, non_basis)
+        if entering_var == -1:
+            # Optimal solution found
+            solution = np.zeros(num_total_vars)
+            for i, var in enumerate(basis):
+                if var < num_total_vars:
+                    solution[var] = x_B[i]
+            # Compute optimal value including c0
+            optimal_value = c0 + np.dot(c, solution[:num_original_vars])
+            # Format optimal value and solution to four decimal places
+            print("\nOptimal solution found.")
+            print(f"Optimal value: {optimal_value:.4f}")
+            print("Solution:")
+            for idx, val in enumerate(solution[:num_original_vars]):
+                print(f" x{idx+1} = {val:.4f}")
+            return round(optimal_value, 4), np.round(solution[:num_original_vars], 4)
+        
+        print(f"Entering Variable: x{entering_var +1}")
+        
+        # Find leaving variable
+        leaving_var, pivot_row = find_leaving_variable(B_inv, A_aug, entering_var, b, basis)
+        if leaving_var == -1:
+            return "The problem is unbounded."
+        
+        print(f"Leaving Variable: x{leaving_var +1} from row {pivot_row +1}")
+        
+        # Update basis
+        basis = update_basis(basis, entering_var, leaving_var, pivot_row, A_aug)
+        # Display updated basis
+        basis_vars = [f'x{var+1}' for var in basis]
+        print(f"Updated Basis: {basis_vars}")
+        
+        # Update non-basis
+        non_basis = [j for j in range(num_total_vars) if j not in basis]
+        non_basis_vars = [f'x{var+1}' for var in non_basis]
+        print(f"Updated Non-Basis: {non_basis_vars}")
+    
+    # If the loop completes without finding an optimal solution
+    return "Maximum iterations reached. The algorithm did not converge."

@@ -1,0 +1,58 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red167\green9\blue245;\red0\green128\blue19;\red14\green0\blue255;
+}
+{\*\expandedcolortbl;;\csgenericrgb\c65490\c3529\c96078;\csgenericrgb\c0\c50196\c7451;\csgenericrgb\c5490\c0\c100000;
+}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs20 \cf0 clear \cf2 all\cf0 ; \
+\
+G = [0 0 0 0 1/2 0;\
+    1/4 0 0 0 0 0;\
+    0 1/2 0 0 0 0;\
+    1/4 1/2 0 0 1/2 0;\
+    1/4 0 0 1 0 1; \
+    1/4 0 0 0 0 0];\
+\
+\cf3 % G = [0 0 0 0 1/2 0;\
+%     1/3  0 0 0 0 0; \
+%     0 1/2 0 0 0 0;\
+%     1/3 1/2  0 0 1/2 0;\
+%     1/3 0 1 1 0 1;\
+%     0 0 0 0 0 0; \
+%      ]\
+\
+\cf0 [EV_G, ev_G] = eig(G); \
+\
+eigenvalues_G = diag(ev_G);\
+\
+v0_G = [1/6 1/6 1/6 1/6 1/6 1/6]'; \cf3 % initial guess for EV of G\
+\cf0 tol=0.00001; max_iter = 10000; EV_dom = [] ; \
+\cf3 %%%%%%%%%%%% Power method to G %%%%%%%%%%%\
+\cf4 for \cf0 i=[1:max_iter]\
+    v_now = G*v0_G; \cf3 % the Power method iteration v_k = G*v_\{k-1\}\
+\cf0     v_next = G*v_now; \cf3 % the Power method iteration v_\{k+1\} = G*v_k\
+\cf0     \cf4 if \cf0 abs(v_next - v_now) < tol \cf3 % when successive iterates are close\
+\cf0         EV_dom = v_next; \
+        \cf4 break\cf0 ;\
+    \cf4 end\
+\cf0     v0_G = v_now; \
+    ev_dom = dot(G*v_now, v_now)/dot(v_now,v_now); \cf3 % Rayleigh quotient \
+\cf0     \cf4 if \cf0 i==max_iter-1\
+        fprintf(\cf2 'Power method failed to converge!! OOPS!!\\n'\cf0 )\
+    \cf4 end\
+end\
+if \cf0 isempty( null(G - eye(6)) ) ~= 1 \cf3 % when: isempty( null(G - eye(6)) ) == 1, \
+\cf0     \cf3 % we have only the "O-vector" that satisfies the eq. Gv = v, i.e. no EV\
+\cf0     \cf3 % of G corresponding to ev = 1\
+\cf0     ev_dom\
+    EV_dom \cf3 % corresponds to soln (R1 R2 R3 R4 R5 R6)\
+\cf0     [temp page_rank] = sort(EV_dom,\cf2 'descend'\cf0 );\
+    \cf4 for \cf0 j=1:6\
+        fprintf(\cf2 'Page %d \\n'\cf0 ,page_rank(j));\
+    \cf4 end\
+end\
+\
+}
